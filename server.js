@@ -5,7 +5,7 @@ const path = require('node:path');
 
 process.loadEnvFile(path.join(__dirname, '.env'));
 
-const { SUPABASE_URL, SUPABASE_KEY } = process.env;
+const { SUPABASE_URL, SUPABASE_KEY, SERVER_IP } = process.env;
 const PORT = Number(process.env.PORT) || 3000;
 const TABLE = 'gmail_contacts';
 const PAGE_SIZE = 1000; // PostgREST returns at most 1000 rows per request by default
@@ -72,6 +72,6 @@ const server = http.createServer(async (req, res) => {
 });
 
 // Bound to localhost only: the dashboard has no login and the table holds personal data.
-server.listen(PORT, '127.0.0.1', () => {
-  console.log(`Dashboard running at http://localhost:${PORT}`);
+server.listen(PORT, `${SERVER_IP}`, () => {
+  console.log(`Dashboard running at http://${SERVER_IP}:${PORT}`);
 });
