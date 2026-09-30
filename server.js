@@ -9,6 +9,17 @@ const { SUPABASE_URL, SUPABASE_KEY, SERVER_IP } = process.env;
 const PORT = Number(process.env.PORT) || 3000;
 const TABLE = 'gmail_contacts';
 const PAGE_SIZE = 1000; // PostgREST returns at most 1000 rows per request by default
+const DIST = path.join(__dirname, 'dist');
+const MIME = {
+  '.html': 'text/html; charset=utf-8',
+  '.js': 'text/javascript; charset=utf-8',
+  '.css': 'text/css; charset=utf-8',
+  '.json': 'application/json; charset=utf-8',
+  '.svg': 'image/svg+xml',
+  '.png': 'image/png',
+  '.ico': 'image/x-icon',
+  '.map': 'application/json; charset=utf-8',
+};
 
 if (!SUPABASE_URL || !SUPABASE_KEY) {
   console.error('Missing SUPABASE_URL or SUPABASE_KEY in .env');
@@ -40,6 +51,32 @@ function sendJson(res, status, body) {
   res.end(JSON.stringify(body));
 }
 
+// Serves the React build produced by `npm run build`.
+function serveStatic(pathname, res) {
+  let rel;
+  try {
+    rel = decodeURIComponent(pathname).replace(/^\/+/, '') || 'index.html';
+  } catch {
+    rel = null;
+  }
+  const file = rel === null ? null : path.resolve(DIST, rel);
+  if (!file || !file.startsWith(DIST + path.sep)) {
+    res.writeHead(404, { 'Content-Type': 'text/plain' });
+    res.end('Not found');
+    return;
+  }
+  fs.readFile(file, (err, data) => {
+    if (err) {
+      const missingBuild = rel === 'index.html';
+      res.writeHead(missingBuild ? 500 : 404, { 'Content-Type': 'text/plain' });
+      res.end(missingBuild ? 'Build not found. Run "npm run build" first.' : 'Not found');
+      return;
+    }
+    res.writeHead(200, { 'Content-Type': MIME[path.extname(file)] || 'application/octet-stream' });
+    res.end(data);
+  });
+}
+
 const server = http.createServer(async (req, res) => {
   const { pathname } = new URL(req.url, 'http://localhost');
 
@@ -54,21 +91,7 @@ const server = http.createServer(async (req, res) => {
     return;
   }
 
-  if (pathname === '/' || pathname === '/index.html') {
-    fs.readFile(path.join(__dirname, 'public', 'index.html'), (err, html) => {
-      if (err) {
-        res.writeHead(500, { 'Content-Type': 'text/plain' });
-        res.end('index.html not found');
-        return;
-      }
-      res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
-      res.end(html);
-    });
-    return;
-  }
-
-  res.writeHead(404, { 'Content-Type': 'text/plain' });
-  res.end('Not found');
+  serveStatic(pathname, res);
 });
 
 // Bound to localhost only: the dashboard has no login and the table holds personal data.

@@ -4,9 +4,20 @@
   "private": true,
   "description": "Simple dashboard for the Supabase gmail_contacts table",
   "scripts": {
+    "dev": "concurrently -k -n api,web \"node --watch server.js\" \"vite\"",
+    "build": "vite build",
     "start": "node server.js"
   },
   "engines": {
     "node": ">=20.12"
+  },
+  "dependencies": {
+    "react": "^19.3.0",
+    "react-dom": "^19.3.0"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-react": "^6.1.1",
+    "concurrently": "^10.0.5",
+    "vite": "^8.3.1"
   }
 }
