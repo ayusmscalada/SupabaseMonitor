@@ -1,0 +1,12 @@
+{
+  "name": "supabase-monitor",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Simple dashboard for the Supabase gmail_contacts table",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "engines": {
+    "node": ">=20.12"
+  }
+}
