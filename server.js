@@ -2,13 +2,12 @@
 const http = require('node:http');
 const fs = require('node:fs');
 const path = require('node:path');
+const { fetchAllRows } = require('./lib/supabase');
 
 process.loadEnvFile(path.join(__dirname, '.env'));
 
 const { SUPABASE_URL, SUPABASE_KEY, SERVER_IP } = process.env;
 const PORT = Number(process.env.PORT) || 3000;
-const TABLE = 'gmail_contacts';
-const PAGE_SIZE = 1000; // PostgREST returns at most 1000 rows per request by default
 const DIST = path.join(__dirname, 'dist');
 const MIME = {
   '.html': 'text/html; charset=utf-8',
@@ -24,26 +23,6 @@ const MIME = {
 if (!SUPABASE_URL || !SUPABASE_KEY) {
   console.error('Missing SUPABASE_URL or SUPABASE_KEY in .env');
   process.exit(1);
-}
-
-async function fetchAllRows() {
-  const base = SUPABASE_URL.replace(/\/+$/, '');
-  const rows = [];
-  for (let from = 0; ; from += PAGE_SIZE) {
-    const res = await fetch(`${base}/${TABLE}?select=*&order=id.asc`, {
-      headers: {
-        apikey: SUPABASE_KEY,
-        Authorization: `Bearer ${SUPABASE_KEY}`,
-        Range: `${from}-${from + PAGE_SIZE - 1}`,
-      },
-    });
-    if (!res.ok) {
-      throw new Error(`Supabase responded ${res.status}: ${await res.text()}`);
-    }
-    const page = await res.json();
-    rows.push(...page);
-    if (page.length < PAGE_SIZE) return rows;
-  }
 }
 
 function sendJson(res, status, body) {
